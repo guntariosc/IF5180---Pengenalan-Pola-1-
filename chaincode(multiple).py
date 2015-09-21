@@ -1,6 +1,4 @@
 #extract chain code from objects in an image file
-#problem: chain codes are already obtained
-#but detected chain codes cannot be saved on list
 
 from scipy import misc
 import numpy as np
@@ -128,7 +126,7 @@ if __name__ == '__main__':
     getBW()
     count = 0
     chainCode = [] #save chain code of one object
-    chainCodes = [] #suppossedly save chain codes of all objects in file
+    chainCodes = [] #suppossedly save string of chain code
     borderElm = [] #save border elements of one object
 
     #get list of chain codes
