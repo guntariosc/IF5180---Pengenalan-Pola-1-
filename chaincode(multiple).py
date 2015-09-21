@@ -8,7 +8,7 @@ import copy
 #import matplotlib.pyplot as plt
 #used for checking if traced element(s) is deleted succesfully
 
-img = misc.imread('c:/Users/User/Pictures/alfabet.jpg')
+img = misc.imread('alfabet.jpg')
 bw = np.zeros((img.shape[0], img.shape[1]))
 
 #create black and white representation of image
@@ -115,13 +115,14 @@ def delObject(img, lowerBound, upperBound):
     img[lowerBound[0]:upperBound[0]+5, lowerBound[1]:upperBound[1]+5] = 0
     return img
 
-def getChainCode():
+def getChainCode(chainCode):
     curInd = (0, 0) #store current black pixel index
     backtrack = (0, 0) #store former white pixel index
     curInd, backtrack = findPixel(curInd, backtrack)
 
     while curInd not in borderElm:
         curInd, backtrack = getBorderElm(bw, curInd, backtrack)
+    return chainCode
 
 if __name__ == '__main__':
     getBW()
@@ -129,15 +130,15 @@ if __name__ == '__main__':
     chainCode = [] #save chain code of one object
     chainCodes = [] #suppossedly save chain codes of all objects in file
     borderElm = [] #save border elements of one object
-    borderElms = [] #supposedly save border elms of all objects in file
 
     #get list of chain codes
     while np.any(bw) == True:
-        getChainCode()
-        chainCodes.append(chainCode)
-        borderElms.append(borderElm)
+        chainCode = getChainCode(chainCode)
+        #convert chain code to string
+        strcc = ''.join(str(e) for e in chainCode)
+        #append string to list of chaincodes
+        chainCodes.append(strcc)
         print "chain code: " + str(chainCode)
-        print "border elements: " + str(borderElm)
         print "\n"
         lowerBound, upperBound = slice(bw, borderElm)
         bw = delObject(bw, lowerBound, upperBound)
@@ -145,9 +146,5 @@ if __name__ == '__main__':
         del chainCode[:]
         count += 1
 
-    #chain code and border elements can be obtained but only append empty list
-    #to chainCodes and borderElms
-    #shown below
     print "\n" + str(chainCodes)
-    print "\n" + str(borderElms)
     print "\n there are " + str(count) + " objects"
