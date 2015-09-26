@@ -3,8 +3,8 @@
 from scipy import misc
 import numpy as np
 import copy
-#import matplotlib.pyplot as plt
-#used for checking if traced element(s) is deleted succesfully
+import matplotlib.pyplot as plt
+import feature_extraction
 
 img = misc.imread('alfabet.jpg')
 bw = np.zeros((img.shape[0], img.shape[1]))
@@ -85,7 +85,9 @@ def getIndex(dir, bpixel):
 #will rotate anti-clockwise
 #param: image array, current black pixel, former white pixel
 def getBorderElm(img, bpixel, wpixel):
-    borderElm.append(bpixel)
+    if bpixel not in borderElm:
+        borderElm.append(bpixel)
+
     pixVal = img[wpixel[0]][wpixel[1]]
     direction = getDirection(bpixel, wpixel) #get initial direction
     index = (0, 0)
@@ -99,6 +101,7 @@ def getBorderElm(img, bpixel, wpixel):
         else:
             bpixel = copy.copy(index)
     chainCode.append(direction)
+    histOfDir[direction] += 1
     return bpixel, wpixel
 
 #slice array than contains object
@@ -110,39 +113,68 @@ def slice(img, border):
 
 #delete object
 def delObject(img, lowerBound, upperBound):
-    img[lowerBound[0]:upperBound[0]+5, lowerBound[1]:upperBound[1]+5] = 0
+    img[lowerBound[0]:upperBound[0]+1, lowerBound[1]:upperBound[1]+1] = 0
     return img
 
 def getChainCode(chainCode):
     curInd = (0, 0) #store current black pixel index
     backtrack = (0, 0) #store former white pixel index
     curInd, backtrack = findPixel(curInd, backtrack)
+    flag = copy.copy(curInd)
+    countFlag = 0
 
-    while curInd not in borderElm:
+    while countFlag < 2:
         curInd, backtrack = getBorderElm(bw, curInd, backtrack)
+        if curInd == flag:
+            countFlag += 1
     return chainCode
 
 if __name__ == '__main__':
     getBW()
+    imgplot = plt.imshow(bw, cmap = 'Greys')
+    plt.show()
     count = 0
-    chainCode = [] #save chain code of one object
-    chainCodes = [] #suppossedly save string of chain code
-    borderElm = [] #save border elements of one object
+
+    chainCodes = [] #save string of chain code
+    features = [] #save histogram of each object
 
     #get list of chain codes
     while np.any(bw) == True:
+        chainCode = [] #save chain code of one object
+        borderElm = [] #save border elements of one object
+        histOfDir = [0]*8 #make histogram of direction
+        amtOfPix = 0 #will store amount of border elements
+
         chainCode = getChainCode(chainCode)
         #convert chain code to string
         strcc = ''.join(str(e) for e in chainCode)
         #append string to list of chaincodes
         chainCodes.append(strcc)
-        print "chain code: " + str(chainCode)
-        print "\n"
-        lowerBound, upperBound = slice(bw, borderElm)
-        bw = delObject(bw, lowerBound, upperBound)
-        del borderElm[:]
-        del chainCode[:]
-        count += 1
+        amtOfPix = len(borderElm)
 
+        #slice array that contains object
+        lowerBound, upperBound = slice(bw, borderElm)
+        #delete that object
+        bw = delObject(bw, lowerBound, upperBound)
+
+        histOfDir = np.asarray(histOfDir)
+        histOfDir = histOfDir*1.0 / amtOfPix*1.0
+        features.append(histOfDir)
+        count += 1
+        #imgplot = plt.imshow(bw, cmap = 'Greys')
+        #plt.show()
+
+    #convert features to array
+    #save it to .txt file
+    features = np.asarray(features)
+    features.tofile('D:\Codes\pengenalan pola\chaincode\larik', sep='||',
+    format = "%.2f")
+    float_formatter = lambda x: "%.2f" %x
+    np.set_printoptions(formatter={'float_kind':float_formatter})
     print "\n" + str(chainCodes)
+    print "\n" + str(features)
     print "\n there are " + str(count) + " objects"
+    #plot histogram of each letter
+    #for n in xrange(len(features)):
+    #    plt.plot(features[n])
+    #    plt.show()
